@@ -244,7 +244,9 @@ exports.exportChapter = function (subject, chapter, exportFolder) {
             ts: lesson.ts,
             title: lesson.title,
             summary: lesson.summary,
-            requirements: lesson.requirements
+            requirements: lesson.requirements,
+            mainline: lesson.mainline,
+            status: lesson.status
         });
         var lessonFolder = path.join(chapterFolder, lesson.id);
         var lessonJsonFile = path.join(lessonFolder, "lesson.json");
