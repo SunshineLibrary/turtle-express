@@ -8,9 +8,13 @@ _.mixin(_str.exports());
 var MATERIAL_FILEDS_LECTURE = ["body", "title"]
     , MATERIAL_FILEDS_PROBLEM = ["body", "title", "explanation", "hint"]
     , MATERIAL_FILEDS_CHOICE = ["body"]
+    , MATERIAL_FILEDS_HYPERVIDEO = ["url"]
     , PROBLEM_WITH_CHOICES = ["singlechoice", "multichoice"];
 
 var convertMaterialObject = function (target, fields, materials) {
+    if (!target) {
+        return;
+    }
     _.each(fields, function (field) {
         if (!target[field]) {
             return;
@@ -24,6 +28,24 @@ var convertMaterialObject = function (target, fields, materials) {
 var refineMaterialId = function (chapter) {
     _.each(chapter.lessons, function (lesson) {
         _.each(lesson.activities, function (activity) {
+            if ("hypervideo" === activity.type) {
+                // replace video
+                if (!activity.video || !activity.video.url) {
+                    throw "hypervideo has wrong video," + JSON.stringify(activity);
+                }
+                // replace video in problems
+                convertMaterialObject(activity.video, MATERIAL_FILEDS_HYPERVIDEO, lesson.materials);
+                _.each(activity.problems, function (problem) {
+                    //replace correct video and wrong videos
+                    if (problem.correct_video) {
+                        convertMaterialObject(problem.correct_video, MATERIAL_FILEDS_HYPERVIDEO, lesson.materials);
+                    }
+                    if (problem.wrong_video) {
+                        convertMaterialObject(problem.wrong_video, MATERIAL_FILEDS_HYPERVIDEO, lesson.materials);
+                    }
+                });
+
+            }
             if ("quiz" === activity.type) {
                 _.each(activity.problems, function (problem) {
                     // replace all materials in every problem
@@ -159,13 +181,23 @@ exports.parseLesson = function (chapterFolder, lessonFolder) {
         activity.parent_id = lesson.id;
         activity.folder_name = _.trim(_.strRight(file, '.'));
         activitiesNameMap[activity.folder_name] = activity;
-        activity.problems = [];
         lesson.activities.push(activity);
 
         files.sort(function (a, b) {
             return parseInt(a.split('.')[0]) - parseInt(b.split('.')[0]);
         });
-        if ("quiz" == activity.type) {
+        if ("hypervideo" === activity.type) {
+            _.each(activity.problems, function (problem) {
+                problem.id = uuid.v4();
+                problem.parent_id = activity.id;
+                _.each(problem.choices, function (choice) {
+                    choice.id = uuid.v4();
+                    choice.parent_id = problem.id;
+                });
+            });
+
+        } else if ("quiz" == activity.type) {
+            activity.problems = [];
             var problems = fs.readdirSync(path.join(activityFolder, file, "problems"));
             problems.sort(function (a, b) {
                 return parseInt(a.split('.')[0]) - parseInt(b.split('.')[0]);
