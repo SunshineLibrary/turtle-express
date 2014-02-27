@@ -124,6 +124,10 @@ exports.parseLesson = function (chapterFolder, lessonFolder) {
             lesson.requirements = undefined;
         }
     }
+    if (lesson.mainline) {
+        lesson.seq = 0;
+    }
+
     // find activities and materials folders
     var activityFolder = path.join(folder, "活动");
     var materialFolder = path.join(folder, "素材");
@@ -190,12 +194,17 @@ exports.parseLesson = function (chapterFolder, lessonFolder) {
             _.each(activity.problems, function (problem) {
                 problem.id = uuid.v4();
                 problem.parent_id = activity.id;
+                if(problem.correct_video && (problem.correct_video.url === "")){
+                    delete problem.correct_video;
+                }
+                if(problem.wrong_video && (problem.wrong_video.url === "")){
+                    delete problem.wrong_video;
+                }
                 _.each(problem.choices, function (choice) {
                     choice.id = uuid.v4();
                     choice.parent_id = problem.id;
                 });
             });
-
         } else if ("quiz" == activity.type) {
             activity.problems = [];
             var problems = fs.readdirSync(path.join(activityFolder, file, "problems"));
@@ -263,7 +272,7 @@ exports.exportChapter = function (subject, chapter, exportFolder) {
     exportChapterManifest.version_code = 0;
     exportChapterManifest.enter_lesson = chapter.enter_lesson;
     exportChapterManifest.launchable = 0;
-    exportChapterManifest.url = "/app/" + exportChapterManifest.id;
+    exportChapterManifest.url = "/webapp/" + exportChapterManifest.id;
     exportChapterManifest.type = "chapter";
     exportChapterManifest.subject = subject;
     exportChapterManifest.lessons = [];
@@ -278,6 +287,7 @@ exports.exportChapter = function (subject, chapter, exportFolder) {
             summary: lesson.summary,
             requirements: lesson.requirements,
             mainline: lesson.mainline,
+            seq: lesson.seq,
             status: lesson.status
         });
         var lessonFolder = path.join(chapterFolder, lesson.id);
