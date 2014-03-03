@@ -35,15 +35,19 @@ var refineMaterialId = function (chapter) {
                 }
                 // replace video in problems
                 convertMaterialObject(activity.video, MATERIAL_FILEDS_HYPERVIDEO, lesson.materials);
-                _.each(activity.problems, function (problem) {
-                    //replace correct video and wrong videos
-                    if (problem.correct_video) {
-                        convertMaterialObject(problem.correct_video, MATERIAL_FILEDS_HYPERVIDEO, lesson.materials);
-                    }
-                    if (problem.wrong_video) {
-                        convertMaterialObject(problem.wrong_video, MATERIAL_FILEDS_HYPERVIDEO, lesson.materials);
-                    }
-                });
+                if (!activity.problems) {
+                    _.each(activity.problems, function (problem) {
+                        //replace correct video and wrong videos
+                        if (problem.correct_video) {
+                            convertMaterialObject(problem.correct_video, MATERIAL_FILEDS_HYPERVIDEO, lesson.materials);
+                        }
+                        if (problem.wrong_video) {
+                            convertMaterialObject(problem.wrong_video, MATERIAL_FILEDS_HYPERVIDEO, lesson.materials);
+                        }
+                    });
+                } else {
+                    activity.problems = [];
+                }
 
             }
             if ("quiz" === activity.type) {
@@ -89,7 +93,7 @@ exports.parseChapter = function (chapterFolder) {
 
     // change all lesson requirements
     _.each(chapter.lessons, function (lesson) {
-        console.log("lesson requirement," + lesson.requirements);
+        console.log("lesson's requirement," + lesson.requirements);
         if (typeof lesson.requirements != "undefined") {
             lesson.requirements = _.map(lesson.requirements, function (requirement) {
                 var requiredLesson = lessonsMap[requirement];
@@ -194,10 +198,10 @@ exports.parseLesson = function (chapterFolder, lessonFolder) {
             _.each(activity.problems, function (problem) {
                 problem.id = uuid.v4();
                 problem.parent_id = activity.id;
-                if(problem.correct_video && (problem.correct_video.url === "")){
+                if (problem.correct_video && (problem.correct_video.url === "")) {
                     delete problem.correct_video;
                 }
-                if(problem.wrong_video && (problem.wrong_video.url === "")){
+                if (problem.wrong_video && (problem.wrong_video.url === "")) {
                     delete problem.wrong_video;
                 }
                 _.each(problem.choices, function (choice) {
@@ -205,6 +209,9 @@ exports.parseLesson = function (chapterFolder, lessonFolder) {
                     choice.parent_id = problem.id;
                 });
             });
+            if(!activity.problems){
+                activity.problems = [];
+            }
         } else if ("quiz" == activity.type) {
             activity.problems = [];
             var problems = fs.readdirSync(path.join(activityFolder, file, "problems"));
