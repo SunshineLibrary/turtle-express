@@ -35,7 +35,7 @@ var refineMaterialId = function (chapter) {
                 }
                 // replace video in problems
                 convertMaterialObject(activity.video, MATERIAL_FILEDS_HYPERVIDEO, lesson.materials);
-                if (!activity.problems) {
+                if (activity.problems) {
                     _.each(activity.problems, function (problem) {
                         //replace correct video and wrong videos
                         if (problem.correct_video) {
